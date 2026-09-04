@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS // AI Terminal</title>
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --secondary: #0066ff;
+            --bg: #050b14;
+            --card-bg: rgba(0, 20, 40, 0.65);
+            --text: #e0f7fc;
+            --alert: #ff0055;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, 'Courier New', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 60%),
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        header {
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .creator-tag {
+            font-size: 0.8rem;
+            color: #88aacc;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            box-shadow: 0 0 8px var(--primary);
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 80px);
+        }
+
+        .side-panel {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .core-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .arc-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px dashed var(--primary);
+            animation: rotate 12s linear infinite;
+        }
+
+        .arc-core {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary) 0%, var(--secondary) 70%);
+            box-shadow: 0 0 25px var(--primary), inset 0 0 15px #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .speaking .arc-core {
+            animation: pulse 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px var(--primary); }
+            100% { transform: scale(1.2); box-shadow: 0 0 50px var(--primary), 0 0 15px #fff; }
+        }
+
+        .api-box {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .api-box label {
+            font-size: 0.7rem;
+            color: var(--primary);
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .api-box input {
+            width: 100%;
+            background: rgba(0, 10, 25, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            padding: 8px;
+            color: #fff;
+            font-size: 0.75rem;
+            outline: none;
+        }
+
+        .diagnostics {
+            width: 100%;
+            margin-top: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: rgba(0, 243, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .chat-container {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: rgba(0, 102, 255, 0.3);
+            border: 1px solid var(--secondary);
+            color: #fff;
+        }
+
+        .msg.nexus {
+            align-self: flex-start;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--text);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-bar {
+            padding: 15px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+            display: flex;
+            gap: 10px;
+            background: rgba(5, 11, 20, 0.8);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 12px 18px;
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+        }
+
+        button {
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .mic-btn.active {
+            background: var(--alert);
+            border-color: var(--alert);
+            color: #fff;
+            box-shadow: 0 0 15px var(--alert);
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            .side-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <div class="brand">NEXUS CORE</div>
+            <div class="creator-tag">SYSTEM CREATED BY MADAN</div>
+        </div>
+        <div class="status-badge" id="statusBadge">ONLINE // SYNCED</div>
+    </header>
+
+    <main>
+        <div class="side-panel">
+            <div class="core-container" id="coreContainer">
+                <div class="arc-ring"></div>
+                <div class="arc-core"></div>
+            </div>
+            <div style="text-align: center; font-size: 0.85rem; color: var(--primary); margin-bottom: 15px;">
+                ARC REACTOR CORE
+            </div>
+
+            <div class="api-box">
+                <label for="apiKey">GEMINI API KEY:</label>
+                <input type="password" id="apiKey" placeholder="Paste API Key Here" onchange="saveKey()">
+            </div>
+            
+            <div class="diagnostics">
+                <p>> HOST: GITHUB PAGES</p>
+                <p>> ENGINE: GEMINI 2.5 FLASH</p>
+                <p>> PROTOCOL: DIRECT API</p>
+                <p>> USER: MADAN</p>
+                <p>> STATUS: READY</p>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="msg nexus">
+                    Nexus Core online. Voice and command links initialized. Welcome back, Madan. Please ensure your Gemini API key is pasted in the side panel.
+                </div>
+            </div>
+
+            <div class="input-bar">
+                <input type="text" id="userInput" placeholder="Initialize voice command or type here..." onkeypress="handleKey(event)">
+                <button class="mic-btn" id="micBtn" onclick="toggleVoice()">MIC</button>
+                <button onclick="sendMessage()">EXECUTE</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SYSTEM_INSTRUCTION = `You are NEXUS, an advanced, futuristic AI core created exclusively by Madan.
+- Your identity is inspired by high-tech Marvel visual interfaces (like J.A.R.V.I.S. and F.R.I.D.A.Y.).
+- Address the user respectfully as "Madan" or "Creator".
+- Keep your tone sharp, intelligent, confident, and slightly futuristic.
+- Keep your responses concise and direct, perfectly optimized for text-to-speech rendering on a digital dashboard.`;
+
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const coreContainer = document.getElementById('coreContainer');
+        const statusBadge = document.getElementById('statusBadge');
+        const micBtn = document.getElementById('micBtn');
+        const apiKeyInput = document.getElementById('apiKey');
+
+        let chatHistory = [];
+        let recognition;
+        let isListening = false;
+
+        // Load saved API key from localStorage if available
+        window.onload = () => {
+            const savedKey = localStorage.getItem('nexus_api_key');
+            if (savedKey) {
+                apiKeyInput.value = savedKey;
+            }
+        };
+
+        function saveKey() {
+            localStorage.setItem('nexus_api_key', apiKeyInput.value.trim());
+        }
+
+        // Initialize Web Speech API
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.classList.add('active');
+                statusBadge.innerText = "LISTENING...";
+            };
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                userInput.value = text;
+                sendMessage();
+            };
+
+            recognition.onerror = () => stopListening();
+            recognition.onend = () => stopListening();
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                alert("Speech recognition is not supported on this browser.");
+                return;
+            }
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            micBtn.classList.remove('active');
+            statusBadge.innerText = "ONLINE // SYNCED";
+        }
+
+        function appendMessage(sender, text) {
+            const msgNode = document.createElement('div');
+            msgNode.classList.add('msg', sender);
+            msgNode.innerText = text;
+            messagesDiv.appendChild(msgNode);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            const apiKey = apiKeyInput.value.trim() || localStorage.getItem('nexus_api_key');
+
+            if (!text) return;
+
+            if (!apiKey) {
+                alert("Please enter your free Gemini API Key in the panel on the left!");
+                return;
+            }
+
+            appendMessage('user', text);
+            userInput.value = '';
+            statusBadge.innerText = "PROCESSING...";
+
+            chatHistory.push({ role: "user", parts: [{ text: text }] });
+
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+                        contents: chatHistory
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const reply = data.candidates[0].content.parts[0].text;
+                    chatHistory.push({ role: "model", parts: [{ text: reply }] });
+                    appendMessage('nexus', reply);
+                    speakText(reply);
+                } else {
+                    appendMessage('nexus', 'Core Error: Malformed response or invalid API Key.');
+                }
+            } catch (err) {
+                appendMessage('nexus', 'Connection Failure: Check network or API Key.');
+            } finally {
+                statusBadge.innerText = "ONLINE // SYNCED";
+            }
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                coreContainer.classList.add('speaking');
+                utterance.onend = () => coreContainer.classList.remove('speaking');
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function handleKey(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+    </script>
+</body>
+</html>
